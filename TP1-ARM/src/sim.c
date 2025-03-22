@@ -49,6 +49,8 @@ int cond_LE = 0b1101;
 int val5 = 0b11111;
 int val3 = 0b111;
 int val4 = 0b1111;
+int val12 = 0b111111111111;
+int val1 = 0b1;
 
 
 void process_instruction()
@@ -184,6 +186,25 @@ void execute_addsr(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
+
+void execute_addsi(uint32_t instruction) {
+
+
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm12 = (instruction & (val12 << 10)) >> 10;
+    int sh = (instruction & (val1 << 22)) >> 22;
+
+    uint64_t imm_value = sh ? (imm12 << 12) : imm12;
+
+    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + imm_value;
+
+    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[rd] < 0) ? 1 : 0;
+    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[rd] == 0) ? 1 : 0;
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+
 
 void execute_bcond(uint32_t instruction){
     int cond = instruction & val4;
