@@ -27,16 +27,17 @@ int opcode_BR = 0b1101011000011111000000;
 int opcode_bcond = 0b01010100;
 int opcode_LSLI = 0b110100110;
 int opcode_LSRI = 0b110100110;
-int opcode_STUR;
-int opcode_STURB;
+int opcode_STUR = 0b11111000000;
+int opcode_STURB = 0b00111000000;
 int opcode_STURH = 0b01111000000;
-int opcode_LDURH;
+int opcode_LDUR = 0b11111000010;
+int opcode_LDURH = 0b0111000010;
 int opcode_LDURB = 0b00111000010;
 int opcode_MOVZ = 0b110100101;
 int opcode_ADDER = 0b10001011001;
 int opcode_ADDI = 0b10010001;
 int opcode_MUL = 0b10011011000;
-int opcode_CBZ = 0b101100; // tengo mis dudas aca.
+int opcode_CBZ = 0b10110100; 
 int opcode_CBNZ = 0b101110;
 
 int cond_EQ = 0b0000;
@@ -54,6 +55,10 @@ int val1 = 0b1;
 int val6 = 0b111111;
 int val2 = 0b11;
 int val26 = 0b11111111111111111111111111;
+int val9 = 0b111111111;
+int val16 = 0b1111111111111111;
+int val19 = 0b1111111111111111111;
+
 
 
 void process_instruction()
@@ -117,10 +122,10 @@ void process_instruction()
         execute_bcond(instruction);
     }
     if (opcode_LSLI == opcode9){
-        execute_lsl(instruction);
+        execute_lsli(instruction);
     }
     if (opcode_LSRI == opcode9){
-        execute_lsr(instruction);
+        execute_lsri(instruction);
     }
     if (opcode_STUR == opcode11){
         execute_stur(instruction);
@@ -130,6 +135,9 @@ void process_instruction()
     }
     if (opcode_STURH == opcode11){
         execute_sturh(instruction);
+    }
+    if(opcode_LDUR = opcode11){
+        execure_ludr(instruction);
     }
     if (opcode_LDURH == opcode11){
         execute_ldurh(instruction);
@@ -182,7 +190,6 @@ void execute_bcond(uint32_t instruction){
     }
 }
 
-// Función para ejecutar ADDS (suma con flags)
 void execute_addsr(uint32_t instruction) {
     
     int rd = (instruction & val5);
@@ -208,7 +215,6 @@ void execute_addsr(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
 void execute_addsi(uint32_t instruction) {
 
     int rd = instruction & val5;
@@ -225,7 +231,6 @@ void execute_addsi(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
 void execute_subser(uint32_t instruction) {
 
     int rd = instruction & val5;
@@ -244,7 +249,6 @@ void execute_subser(uint32_t instruction) {
     // Avanzar PC
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
 void execute_subsi(uint32_t instruction) {
 
     int rd = instruction & val5;
@@ -262,7 +266,6 @@ void execute_subsi(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
 void execute_cmper(uint32_t instruction) {
     int rn = (instruction & (val5 << 5)) >> 5;
     int imm3 = (instruction & (val3 << 10)) >> 10;
@@ -363,5 +366,160 @@ void execute_br(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.REGS[rn];
 }
+void execute_lsli(uint32_t instruction) {
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int immr = (instruction & (val6 << 16)) >> 16;
+
+    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] << immr;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_lsri(uint32_t instruction) {
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int immr = (instruction & (val6 << 16)) >> 16;
+
+    NEXT_STATE.REGS[rd] = (uint64_t)CURRENT_STATE.REGS[rn] >> immr;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_stur(uint32_t instruction) {
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    mem_write_32(address, (uint32_t)CURRENT_STATE.REGS[rt]);
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_sturb(uint32_t instruction) {
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    uint8_t byte_value = (uint8_t)(CURRENT_STATE.REGS[rt] & 0xFF);
+    mem_write_32(address, byte_value);
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_sturh(uint32_t instruction) {
+    int val5 = 0b11111;
+    int val9 = 0b111111111;
+
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    uint16_t halfword_value = (uint16_t)(CURRENT_STATE.REGS[rt] & 0xFFFF);
+    mem_write_32(address, halfword_value);
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_ldur(uint32_t instruction) {
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    uint32_t word_value = mem_read_32(address);
+    NEXT_STATE.REGS[rt] = (uint64_t)word_value;
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_ldurh(uint32_t instruction) {
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    uint16_t halfword_value = mem_read_32(address) & 0xFFFF;
+    NEXT_STATE.REGS[rt] = (uint64_t)halfword_value;
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_ldurb(uint32_t instruction) {
+    int rt = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm9 = (instruction & (val9 << 12)) >> 12;
+
+    uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+    uint8_t byte_value = mem_read_32(address) & 0xFF;
+    NEXT_STATE.REGS[rt] = (uint64_t)byte_value;
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_movz(uint32_t instruction) {
+    int rd = instruction & val5;
+    int imm16 = (instruction & (val16 << 5)) >> 5;
+    int hw = (instruction & (0b11 << 21)) >> 21;
+
+    if (hw == 0) {
+        NEXT_STATE.REGS[rd] = (uint64_t)imm16;
+    }
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_addsr(uint32_t instruction) {
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm3 = (instruction & (val3 << 10)) >> 10;
+    int option = (instruction & (val3 << 13)) >> 13;
+    int rm = (instruction & (val5 << 16)) >> 16;
+
+    uint64_t shifted_rm = CURRENT_STATE.REGS[rm] << imm3;
+    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + shifted_rm;
+
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_addi(uint32_t instruction) {
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int imm12 = (instruction & (val12 << 10)) >> 10;
+    int shift = (instruction & (val1 << 22)) >> 22;
+
+    uint64_t imm_value = shift ? (imm12 << 12) : imm12;
+
+    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + imm_value;
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_mul(uint32_t instruction) {
+    int rd = instruction & val5;
+    int rn = (instruction & (val5 << 5)) >> 5;
+    int rm = (instruction & (val5 << 16)) >> 16;
+
+    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] * CURRENT_STATE.REGS[rm];
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+}
+void execute_cbz(uint32_t instruction) {
+    int rt = instruction & val5;
+    int imm19 = (instruction >> 5) & val19;
+    int32_t offset = (imm19 << 2);  // se multiplica por 4 (offset de palabra)
+    
+    // Sign-extend si el bit 18 está en 1
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFF80000;
+    }
+
+    if (CURRENT_STATE.REGS[rt] == 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cbnz(uint32_t instruction) {
+    int rt = instruction & val5;
+    int imm19 = (instruction >> 5) & val19;
+    int64_t offset = ((int32_t)(imm19 << 13)) >> 11; // sign-extend de 19 bits y multiplicar por 4
+
+    if (CURRENT_STATE.REGS[rt] != 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+
 
 
