@@ -189,6 +189,95 @@ void execute_bcond(uint32_t instruction){
         execute_cond_le(instruction);
     }
 }
+void execute_cond_eq(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & val19;
+    int cond = instruction & val4;  // Aunque para BEQ cond siempre es 0b0000
+    int32_t offset = (imm19 << 2);  // Se multiplica por 4
+
+    // Extensión de signo si el bit 18 (más significativo de imm19) es 1
+    if (imm19 & (1 << 18)) {
+        offset |= 0b11111111111110000000000000000000;  // Extiende a 32 bits con 1s
+    }
+
+    // Condición para BEQ: salta si Z == 1
+    if (CURRENT_STATE.FLAG_Z == 1) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cond_ne(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & 0b1111111111111111111;  // Extrae los bits 23:5
+    int32_t offset = imm19 << 2;  // Multiplica por 4 (inserta dos ceros a la derecha)
+
+    // Sign-extend si el bit 18 está en 1
+    if (imm19 & (1 << 18)) {
+        offset |= 0b11111111111110000000000000000000;  // Rellena los bits altos con 1s
+    }
+
+    // Condición para BNE: salta si Z == 0
+    if (CURRENT_STATE.FLAG_Z == 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cond_gt(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & 0b1111111111111111111;
+    int32_t offset = (imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFE000;  // extensión de signo
+    }
+
+    if ((CURRENT_STATE.FLAG_Z == 0) && (CURRENT_STATE.FLAG_N == 0)) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cond_lt(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & 0b1111111111111111111;
+    int32_t offset = (imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFE000;
+    }
+
+    if (CURRENT_STATE.FLAG_N == 1) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cond_ge(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & 0b1111111111111111111;
+    int32_t offset = (imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFE000;
+    }
+
+    if (CURRENT_STATE.FLAG_N == 0) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+void execute_cond_le(uint32_t instruction) {
+    int imm19 = (instruction >> 5) & 0b1111111111111111111;
+    int32_t offset = (imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFE000;
+    }
+
+    if ((CURRENT_STATE.FLAG_Z == 1) || (CURRENT_STATE.FLAG_N == 1)) {
+        NEXT_STATE.PC = CURRENT_STATE.PC + offset;
+    } else {
+        NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+    }
+}
+
+
+
+
 
 void execute_addsr(uint32_t instruction) {
     
