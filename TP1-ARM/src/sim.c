@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <shell.h>
-
-
-extern CPU_State;
+#include "shell.h"
+// extern CPU_State;
 
 int mask11 = 0b1111111111100000000000000000;
 int mask8 = 0b11111111000000000000000000000000;
@@ -60,135 +58,6 @@ int val16 = 0b1111111111111111;
 int val19 = 0b1111111111111111111;
 
 
-
-void process_instruction()
-{
-    /* execute one instruction here. You should use CURRENT_STATE and modify
-     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
-     * access memory. 
-     * */
-    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-    int opcode11 = instruction & mask11;
-    opcode11 = opcode11 >> 21;
-    int opcode8 = instruction & mask8;
-    opcode8 = opcode8 >> 24;
-    int opcode6 = instruction & mask6;
-    opcode6 = opcode6 >> 26;
-    int opcode22 = instruction & mask22;
-    opcode22 = opcode22 >> 10;
-    int opcode9 = instruction & mask9;
-    opcode9 = opcode9 >> 23;
-
-
-
-    if (opcode_ADDSR == opcode11){
-        execute_addsr(instruction);
-    }
-    if (opcode_ADDSI == opcode8){
-        execute_addsi(instruction);
-    }
-    if(opcode_SUBSER == opcode11){
-        execute_subser(instruction);
-    }
-    if (opcode_SUBSI == opcode8){
-        execute_subsi(instruction);
-    }
-    if (opcode_HLT == opcode11){
-        printf("HLT\n");
-        RUN_BIT = FALSE;
-    }
-    if (opcode_CMPER == opcode11){
-        execute_cmper(instruction);
-    }
-    if (opcode_CMPI == opcode8){
-        execute_cmpi(instruction);
-    }
-    if (opcode_ANDS == opcode8){
-        execute_ands(instruction);
-    }
-    if (opcode_EORSR == opcode8){
-        execute_eor(instruction);
-    }
-    if (opcode_ORRSR == opcode8){
-        execute_orr(instruction);
-    }
-    if (opcode_B == opcode6){
-        execute_b(instruction);
-    }
-    if (opcode_BR == opcode22){
-        execute_br(instruction);
-    }
-    if (opcode_bcond == opcode8){
-        execute_bcond(instruction);
-    }
-    if (opcode_LSLI == opcode9){
-        execute_lsli(instruction);
-    }
-    if (opcode_LSRI == opcode9){
-        execute_lsri(instruction);
-    }
-    if (opcode_STUR == opcode11){
-        execute_stur(instruction);
-    }
-    if (opcode_STURB == opcode11){
-        execute_sturb(instruction);
-    }
-    if (opcode_STURH == opcode11){
-        execute_sturh(instruction);
-    }
-    if(opcode_LDUR = opcode11){
-        execure_ludr(instruction);
-    }
-    if (opcode_LDURH == opcode11){
-        execute_ldurh(instruction);
-    }
-    if (opcode_LDURB == opcode11){
-        execute_ldurb(instruction);
-    }
-    if (opcode_MOVZ == opcode9){
-        execute_movz(instruction);
-    }
-    if (opcode_ADDER == opcode11){
-        execute_adder(instruction);
-    }
-    if (opcode_ADDI == opcode8){
-        execute_addi(instruction);
-    }
-    if (opcode_MUL == opcode11){
-        execute_mul(instruction);
-    }
-    if (opcode_CBZ == opcode6){
-        execute_cbz(instruction);
-    }
-    if (opcode_CBNZ == opcode6){
-        execute_cbnz(instruction);
-    }
-    else{
-        printf("Invalid instruction\n");
-    }
-}
-
-void execute_bcond(uint32_t instruction){
-    int cond = instruction & val4;
-    if (cond = cond_EQ){
-        execute_cond_eq(instruction);
-    }
-    if (cond = cond_NE){
-        execute_cond_ne(instruction);
-    }
-    if (cond = cond_GT){
-        execute_cond_gt(instruction);
-    }
-    if (cond = cond_LT){
-        execute_cond_lt(instruction);
-    }
-    if (cond = cond_GE){
-        execute_cond_ge(instruction);
-    }
-    if (cond = cond_LE){
-        execute_cond_le(instruction);
-    }
-}
 void execute_cond_eq(uint32_t instruction) {
     int imm19 = (instruction >> 5) & val19;
     int cond = instruction & val4;  // Aunque para BEQ cond siempre es 0b0000
@@ -274,11 +143,6 @@ void execute_cond_le(uint32_t instruction) {
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
-
-
-
-
-
 void execute_addsr(uint32_t instruction) {
     
     int rd = (instruction & val5);
@@ -550,7 +414,7 @@ void execute_movz(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-void execute_addsr(uint32_t instruction) {
+void execute_adder(uint32_t instruction) {
     int rd = instruction & val5;
     int rn = (instruction & (val5 << 5)) >> 5;
     int imm3 = (instruction & (val3 << 10)) >> 10;
@@ -609,6 +473,130 @@ void execute_cbnz(uint32_t instruction) {
     }
 }
 
+void execute_bcond(uint32_t instruction){
+    int cond = instruction & val4;
+    if (cond == cond_EQ){
+        execute_cond_eq(instruction);
+    }
+    if (cond == cond_NE){
+        execute_cond_ne(instruction);
+    }
+    if (cond == cond_GT){
+        execute_cond_gt(instruction);
+    }
+    if (cond == cond_LT){
+        execute_cond_lt(instruction);
+    }
+    if (cond == cond_GE){
+        execute_cond_ge(instruction);
+    }
+    if (cond == cond_LE){
+        execute_cond_le(instruction);
+    }
+}
+void process_instruction()
+{
+    /* execute one instruction here. You should use CURRENT_STATE and modify
+     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
+     * access memory. 
+     * */
+    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
+    int opcode11 = instruction & mask11;
+    opcode11 = opcode11 >> 21;
+    int opcode8 = instruction & mask8;
+    opcode8 = opcode8 >> 24;
+    int opcode6 = instruction & mask6;
+    opcode6 = opcode6 >> 26;
+    int opcode22 = instruction & mask22;
+    opcode22 = opcode22 >> 10;
+    int opcode9 = instruction & mask9;
+    opcode9 = opcode9 >> 23;
 
 
 
+    if (opcode_ADDSR == opcode11){
+        execute_addsr(instruction);
+    }
+    if (opcode_ADDSI == opcode8){
+        execute_addsi(instruction);
+    }
+    if(opcode_SUBSER == opcode11){
+        execute_subser(instruction);
+    }
+    if (opcode_SUBSI == opcode8){
+        execute_subsi(instruction);
+    }
+    if (opcode_HLT == opcode11){
+        printf("HLT\n");
+        RUN_BIT = FALSE;
+    }
+    if (opcode_CMPER == opcode11){
+        execute_cmper(instruction);
+    }
+    if (opcode_CMPI == opcode8){
+        execute_cmpi(instruction);
+    }
+    if (opcode_ANDS == opcode8){
+        execute_ands(instruction);
+    }
+    if (opcode_EORSR == opcode8){
+        execute_eorsr(instruction);
+    }
+    if (opcode_ORRSR == opcode8){
+        execute_orr(instruction);
+    }
+    if (opcode_B == opcode6){
+        execute_b(instruction);
+    }
+    if (opcode_BR == opcode22){
+        execute_br(instruction);
+    }
+    if (opcode_bcond == opcode8){
+        execute_bcond(instruction);
+    }
+    if (opcode_LSLI == opcode9){
+        execute_lsli(instruction);
+    }
+    if (opcode_LSRI == opcode9){
+        execute_lsri(instruction);
+    }
+    if (opcode_STUR == opcode11){
+        execute_stur(instruction);
+    }
+    if (opcode_STURB == opcode11){
+        execute_sturb(instruction);
+    }
+    if (opcode_STURH == opcode11){
+        execute_sturh(instruction);
+    }
+    if(opcode_LDUR == opcode11){
+        execute_ldur(instruction);
+    }
+    if (opcode_LDURH == opcode11){
+        execute_ldurh(instruction);
+    }
+    if (opcode_LDURB == opcode11){
+        execute_ldurb(instruction);
+    }
+    if (opcode_MOVZ == opcode9){
+        execute_movz(instruction);
+    }
+    if (opcode_ADDER == opcode11){
+        execute_adder(instruction);
+    }
+    if (opcode_ADDI == opcode8){
+        execute_addi(instruction);
+    }
+    if (opcode_MUL == opcode11){
+        execute_mul(instruction);
+    }
+    if (opcode_CBZ == opcode6){
+        execute_cbz(instruction);
+    }
+    if (opcode_CBNZ == opcode6){
+        execute_cbnz(instruction);
+    }
+    else{
+        printf("Invalid instruction\n");
+    }
+}
