@@ -511,7 +511,8 @@ void process_instruction()
     opcode22 = opcode22 >> 10;
     int opcode9 = instruction & mask9;
     opcode9 = opcode9 >> 23;
-
+    print(opcode11);
+    print(opcode8);
 
 
     if (opcode_ADDSR == opcode11){
