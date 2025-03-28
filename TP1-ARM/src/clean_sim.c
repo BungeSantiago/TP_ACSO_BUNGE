@@ -2,21 +2,6 @@
 #include <assert.h>
 #include <string.h>
 #include "shell.h"
-// extern CPU_State;
-
-// void execute_cond_eq(uint32_t instruction);
-// void execute_cond_ne(uint32_t instruction);
-// void execute_cond_gt(uint32_t instruction);
-// void execute_(uint32_t instruction);
-// void execute_hlt(uint32_t instruction);
-
-// Define la estructura para el diccionario
-typedef struct {
-    const char *instruction_name;
-    uint32_t opcode;
-    void (*execute_function)(uint32_t instruction);
-} InstructionInfo;
-
 
 void execute_cond_eq(uint32_t instruction);
 void execute_cond_ne(uint32_t instruction);
@@ -55,39 +40,20 @@ void execute_movz(uint32_t instruction);
 void execute_cbz(uint32_t instruction);
 void execute_cbnz(uint32_t instruction);
 
+// Define la estructura para el diccionario
+typedef struct {
+    const char *instruction_name;
+    uint32_t opcode;
+    void (*execute_function)(uint32_t instruction);
+} InstructionInfo;
+
 InstructionInfo instruction_table[] = {
     {"ADDSR", 0b10101011000, execute_addsr},
     {"ADDSI", 0b10110001, execute_addsi},
-    {"SUBSER", 0b11101011000, execute_subser},
+    {"SUBSER", 0b11101011001, execute_subser},
     {"SUBSI", 0b11110001, execute_subsi},
-    {"HLT", 0b11010100010, NULL}, // HLT doesn't need a function
-    {"CMPER", 0b11101011001, execute_cmper},
-    {"CMPI", 0b11110001, execute_cmpi},
-    {"ANDS", 0b11101010, execute_ands},
-    {"EORSR", 0b11001010, execute_eorsr},
-    {"ORRSR", 0b10101010, execute_orr},
-    {"B", 0b000101, execute_b},
-    {"BR", 0b1101011000011111000000, execute_br},
-    {"BCOND", 0b01010100, execute_bcond},
-    {"LSLI", 0b110100110, execute_lsli},
-    {"LSRI", 0b110100110, execute_lsri},
-    {"STUR", 0b11111000000, execute_stur},
-    {"STURB", 0b00111000000, execute_sturb},
-    {"STURH", 0b01111000000, execute_sturh},
-    {"LDUR", 0b11111000010, execute_ldur},
-    {"LDURH", 0b0111000010, execute_ldurh},
-    {"LDURB", 0b00111000010, execute_ldurb},
-    {"MOVZ", 0b110100101, execute_movz},
-    {"ADDER", 0b10001011001, execute_adder},
-    {"ADDI", 0b10010001, execute_addi},
-    {"MUL", 0b10011011000, execute_mul},
-    {"CBZ", 0b10110100, execute_cbz},
-    {"CBNZ", 0b101110, execute_cbnz},
-    // Add more instructions as needed
+    // Agrega más instrucciones aquí
 };
-
-// Number of instructions in the table
-#define INSTRUCTION_COUNT (sizeof(instruction_table) / sizeof(InstructionInfo))
 
 uint32_t mask11 = 0b11111111111 ;
 uint32_t mask8 = 0b11111111000000000000000000000000;
@@ -95,33 +61,29 @@ uint32_t mask6 = 0b11111100000000000000000000000000;
 uint32_t mask22 = 0b11111111111111111111110000000000;
 uint32_t mask9 = 0b11111111100000000000000000000000;
 
-// uint32_t opcode_ADDSR = 0b10101011000; // cambiamos el ultimo 1 por un 0
-// uint32_t opcode_ADDSI = 0b10110001;
-// uint32_t opcode_SUBSER = 0b11101011001;
-// uint32_t opcode_SUBSI = 0b11110001;
-// uint32_t opcode_HLT = 0b11010100010;
-// uint32_t opcode_CMPER = 0b11101011001;
-// uint32_t opcode_CMPI = 0b11110001;
-// uint32_t opcode_ANDS = 0b11101010;
-// uint32_t opcode_EORSR = 0b11001010;
-// uint32_t opcode_ORRSR = 0b10101010;
-// uint32_t opcode_B = 0b000101;
-// uint32_t opcode_BR = 0b1101011000011111000000;
-// uint32_t opcode_bcond = 0b01010100;
-// uint32_t opcode_LSLI = 0b110100110;
-// uint32_t opcode_LSRI = 0b110100110;
-// uint32_t opcode_STUR = 0b11111000000;
-// uint32_t opcode_STURB = 0b00111000000;
-// uint32_t opcode_STURH = 0b01111000000;
-// uint32_t opcode_LDUR = 0b11111000010;
-// uint32_t opcode_LDURH = 0b0111000010;
-// uint32_t opcode_LDURB = 0b00111000010;
-// uint32_t opcode_MOVZ = 0b110100101;
-// uint32_t opcode_ADDER = 0b10001011001;
-// uint32_t opcode_ADDI = 0b10010001;
-// uint32_t opcode_MUL = 0b10011011000;
-// uint32_t opcode_CBZ = 0b10110100; 
-// uint32_t opcode_CBNZ = 0b101110;
+/*
+uint32_t opcode_CMPER = 0b11101011001;
+uint32_t opcode_CMPI = 0b11110001;
+uint32_t opcode_ANDS = 0b11101010;
+uint32_t opcode_EORSR = 0b11001010;
+uint32_t opcode_ORRSR = 0b10101010;
+uint32_t opcode_B = 0b000101;
+uint32_t opcode_BR = 0b1101011000011111000000;
+uint32_t opcode_bcond = 0b01010100;
+uint32_t opcode_LSLI = 0b110100110;
+uint32_t opcode_LSRI = 0b110100110;
+uint32_t opcode_STUR = 0b11111000000;
+uint32_t opcode_STURB = 0b00111000000;
+uint32_t opcode_STURH = 0b01111000000;
+uint32_t opcode_LDUR = 0b11111000010;
+uint32_t opcode_LDURH = 0b0111000010;
+uint32_t opcode_LDURB = 0b00111000010;
+uint32_t opcode_MOVZ = 0b110100101;
+uint32_t opcode_ADDER = 0b10001011001;
+uint32_t opcode_ADDI = 0b10010001;
+uint32_t opcode_MUL = 0b10011011000;
+uint32_t opcode_CBZ = 0b10110100; 
+uint32_t opcode_CBNZ = 0b101110;
 
 uint32_t cond_EQ = 0b0000;
 uint32_t cond_NE = 0b0001;
@@ -129,6 +91,7 @@ uint32_t cond_GT = 0b1100;
 uint32_t cond_LT = 0b1011;
 uint32_t cond_GE = 0b1010;
 uint32_t cond_LE = 0b1101;
+*/
 
 uint32_t val5 = 0b11111;
 uint32_t val11 = 0b11111111111;
@@ -231,6 +194,7 @@ void execute_cond_le(uint32_t instruction) {
     }
 }
 void execute_addsr(uint32_t instruction) {
+    printf("Executing ADDSR\n");
     
     int rd = (instruction & val5);
     int rn = (instruction & (val5 << 5)) >> 5;
@@ -256,6 +220,7 @@ void execute_addsr(uint32_t instruction) {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_addsi(uint32_t instruction) {
+    printf("Executing ADDSI\n");
 
     int rd = instruction & val5;
     int rn = (instruction & (val5 << 5)) >> 5;
@@ -559,180 +524,43 @@ void execute_cbnz(uint32_t instruction) {
         NEXT_STATE.PC = CURRENT_STATE.PC + 4;
     }
 }
-void execute_bcond(uint32_t instruction){
-    int cond = instruction & val4;
-    if (cond == cond_EQ){
-        execute_cond_eq(instruction);
-    }
-    if (cond == cond_NE){
-        execute_cond_ne(instruction);
-    }
-    if (cond == cond_GT){
-        execute_cond_gt(instruction);
-    }
-    if (cond == cond_LT){
-        execute_cond_lt(instruction);
-    }
-    if (cond == cond_GE){
-        execute_cond_ge(instruction);
-    }
-    if (cond == cond_LE){
-        execute_cond_le(instruction);
-    }
-}
+// void execute_bcond(uint32_t instruction){
+//     int cond = instruction & val4;
+//     if (cond == cond_EQ){
+//         execute_cond_eq(instruction);
+//     }
+//     if (cond == cond_NE){
+//         execute_cond_ne(instruction);
+//     }
+//     if (cond == cond_GT){
+//         execute_cond_gt(instruction);
+//     }
+//     if (cond == cond_LT){
+//         execute_cond_lt(instruction);
+//     }
+//     if (cond == cond_GE){
+//         execute_cond_ge(instruction);
+//     }
+//     if (cond == cond_LE){
+//         execute_cond_le(instruction);
+//     }
+// }
 
-/*
-void process_instruction()
-{
-    execute one instruction here. You should use CURRENT_STATE and modify
-     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
-     * access memory. 
-     * 
+// Número de instrucciones en el diccionario
+#define INSTRUCTION_COUNT (sizeof(instruction_table) / sizeof(instruction_table[0]))
 
-    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-    printf("instruction: %x\n", instruction);
+// Función para buscar y ejecutar una instrucción
+void process_instruction(uint32_t instruction) {
+    uint32_t opcode11 = (instruction >> 21) & 0b11111111111; // Extrae el opcode de 11 bits
+    uint32_t opcode8 = (instruction >> 24) & 0b11111111;     // Extrae el opcode de 8 bits
 
-    // Extraigo el opcode
-
-    uint32_t opcode11 = instruction & (val11 << 21) ;
-    opcode11 = opcode11 >> 21;    
-    
-    uint32_t opcode8 = instruction & (val8 << 24);
-    // printf("opcode8 before shift: %x\n", opcode8);
-    opcode8 = opcode8 >> 24;
-    // printf("opcode8 after shift: %x\n", opcode8);
-
-    uint32_t opcode6 = instruction & mask6;
-    opcode6 = opcode6 >> 26;
-
-    uint32_t opcode22 = instruction & mask22;
-    opcode22 = opcode22 >> 10;
-
-    uint32_t opcode9 = instruction & mask9;
-    opcode9 = opcode9 >> 23;    
-    // printf("opcode addsi: %x\n", opcode_ADDSI);
-
-    if (opcode_ADDSR == opcode11){
-        execute_addsr(instruction);
-    }
-    else if (opcode_ADDSI == opcode8){
-        execute_addsi(instruction);
-    }
-    else if(opcode_SUBSER == opcode11){
-        execute_subser(instruction);
-    }
-    else if (opcode_SUBSI == opcode8){
-        execute_subsi(instruction);
-    }
-    else if (opcode_HLT == opcode11){
-        printf("HLT\n");
-        RUN_BIT = FALSE;
-    }
-    else if (opcode_CMPER == opcode11){
-        execute_cmper(instruction);
-    }
-    else if (opcode_CMPI == opcode8){
-        execute_cmpi(instruction);
-    }
-    else if (opcode_ANDS == opcode8){
-        execute_ands(instruction);
-    }
-    else if (opcode_EORSR == opcode8){
-        execute_eorsr(instruction);
-    }
-    else if (opcode_ORRSR == opcode8){
-        execute_orr(instruction);
-    }
-    else if (opcode_B == opcode6){
-        execute_b(instruction);
-    }
-    else if (opcode_BR == opcode22){
-        execute_br(instruction);
-    }
-    else if (opcode_bcond == opcode8){
-        execute_bcond(instruction);
-    }
-    else if (opcode_LSLI == opcode9){
-        execute_lsli(instruction);
-    }
-    else if (opcode_LSRI == opcode9){
-        execute_lsri(instruction);
-    }
-    else if (opcode_STUR == opcode11){
-        execute_stur(instruction);
-    }
-    else if (opcode_STURB == opcode11){
-        execute_sturb(instruction);
-    }
-    else if (opcode_STURH == opcode11){
-        execute_sturh(instruction);
-    }
-    else if(opcode_LDUR == opcode11){
-        execute_ldur(instruction);
-    }
-    else if (opcode_LDURH == opcode11){
-        execute_ldurh(instruction);
-    }
-    else if (opcode_LDURB == opcode11){
-        execute_ldurb(instruction);
-    }
-    else if (opcode_MOVZ == opcode9){
-        execute_movz(instruction);
-    }
-    else if (opcode_ADDER == opcode11){
-        execute_adder(instruction);
-    }
-    else if (opcode_ADDI == opcode8){
-        execute_addi(instruction);
-    }
-    else if (opcode_MUL == opcode11){
-        execute_mul(instruction);
-    }
-    else if (opcode_CBZ == opcode6){
-        execute_cbz(instruction);
-    }
-    else if (opcode_CBNZ == opcode6){
-        execute_cbnz(instruction);
-    }
-    else{
-        printf("Invalid instruction\n");
-    }
-}
-*/
-
-void process_instruction() {
-    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-    printf("instruction: %x\n", instruction);
-
-    // Extract opcodes
-    uint32_t opcode11 = (instruction >> 21) & 0b11111111111; // 11-bit opcode
-    uint32_t opcode8 = (instruction >> 24) & 0b11111111;     // 8-bit opcode
-    uint32_t opcode6 = (instruction >> 26) & 0b111111;       // 6-bit opcode
-    uint32_t opcode22 = (instruction >> 10) & 0b1111111111111111111111; // 22-bit opcode
-    uint32_t opcode9 = (instruction >> 23) & 0b111111111;    // 9-bit opcode
-
-    // Search the instruction table
     for (int i = 0; i < INSTRUCTION_COUNT; i++) {
-        if (instruction_table[i].opcode == opcode11 || 
-            instruction_table[i].opcode == opcode8 || 
-            instruction_table[i].opcode == opcode6 || 
-            instruction_table[i].opcode == opcode22 || 
-            instruction_table[i].opcode == opcode9) {
-            
+        if (instruction_table[i].opcode == opcode11 || instruction_table[i].opcode == opcode8) {
             printf("Executing instruction: %s\n", instruction_table[i].instruction_name);
-
-            // Execute the function if it exists
-            if (instruction_table[i].execute_function != NULL) {
-                instruction_table[i].execute_function(instruction);
-            } else if (strcmp(instruction_table[i].instruction_name, "HLT") == 0) {
-                printf("HLT\n");
-                RUN_BIT = FALSE;
-            }
+            instruction_table[i].execute_function(instruction);
             return;
         }
     }
 
-    // If no match is found
     printf("Invalid instruction\n");
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4; // Skip invalid instruction
 }
