@@ -60,9 +60,9 @@ InstructionInfo instruction_table[] = {
 
     {"B", 0b000101, execute_b},
     {"BR", 0b1101011000011111000000, execute_br},
-    {"BCOND", 0b01010100, execute_bcond},
+    {"BCOND", 0b01010100, execute_bcond}, // segmentation faults
 
-    {"LSL", 0b110100110, execute_lsl},
+    {"LSL", 0b110100110, execute_lsl}, // funciona
     {"LSR", 0b110100110, execute_lsr}, // mismo opcode q onda???
 
     {"STUR", 0b11111000000, execute_stur},
