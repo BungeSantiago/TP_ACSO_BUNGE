@@ -57,9 +57,9 @@ InstructionInfo instruction_table[] = {
     {"ANDS", 0b11101010, execute_ands},
     {"EORSR", 0b11001010, execute_eor},
     {"ORRSR", 0b10101010, execute_orr},
-    
     {"B", 0b000101, execute_b},
     {"BR", 0b1101011000011111000000, execute_br},
+    
     {"BCOND", 0b01010100, execute_bcond},
     {"LSLI", 0b110100110, execute_lsli},
     {"LSRI", 0b110100110, execute_lsri},
