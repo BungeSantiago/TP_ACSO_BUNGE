@@ -66,15 +66,13 @@ InstructionInfo instruction_table[] = {
     {"ADDER", 0b10001011000, execute_adder},
     {"ADDI", 0b10010001, execute_addi},
     {"B", 0b000101, execute_b},
+    {"CBZ", 0b10110100, execute_cbz},
+    {"CBNZ", 0b10110101, execute_cbnz},
 
     {"BR", 0b1101011000011111000000, execute_br}, //no se wacho
-
     {"BCOND", 0b01010100, execute_bcond}, // faltan tests
-
     {"STURH", 0b01111000000, execute_sturh},
     {"LDURH", 0b0111000010, execute_ldurh},
-    {"CBZ", 0b10110100, execute_cbz},
-    {"CBNZ", 0b101110, execute_cbnz},
 };
 
 #define INSTRUCTION_COUNT (sizeof(instruction_table) / sizeof(InstructionInfo))
