@@ -1,7 +1,6 @@
 .text
-mov X1, 0x1000  
-lsl X1, X1, 16   
-mov W10, 0x1234     
-sturh W10, [X1, 0x0]  
-ldurh W11, [X1, 0x0] 
-HLT 0              
+mov X1, 0x1000    
+mov H10, 0x1234      
+sturh H10, [X1, 0x0]  
+ldurh H11, [X1, 0x0] 
+HLT 0           
