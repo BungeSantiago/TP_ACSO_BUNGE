@@ -9,3 +9,5 @@ adds X5, X3, X2
 
 truelabel:
 adds X6, X3, X2
+
+HLT 0
