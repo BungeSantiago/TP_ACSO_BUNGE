@@ -63,9 +63,10 @@ InstructionInfo instruction_table[] = {
     {"BCOND", 0b01010100, execute_bcond},
 
     {"LSL", 0b110100110, execute_lsl},
-    {"LSR", 0b110100110, execute_lsr},
-    
+    {"LSR", 0b110100110, execute_lsr}, // mismo opcode q onda???
+
     {"STUR", 0b11111000000, execute_stur},
+    
     {"STURB", 0b00111000000, execute_sturb},
     {"STURH", 0b01111000000, execute_sturh},
     {"LDUR", 0b11111000010, execute_ldur},
@@ -74,7 +75,7 @@ InstructionInfo instruction_table[] = {
     {"MOVZ", 0b110100101, execute_movz}, // funciona
     {"ADDER", 0b10001011001, execute_adder},
     {"ADDI", 0b10010001, execute_addi},
-    {"MUL", 0b10011011000, execute_mul},
+    {"MUL", 0b10011011000, execute_mul}, // funciona
     {"CBZ", 0b10110100, execute_cbz},
     {"CBNZ", 0b101110, execute_cbnz},
     // Add more instructions as needed
