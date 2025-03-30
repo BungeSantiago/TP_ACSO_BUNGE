@@ -1,11 +1,12 @@
 .text
-adds X1, X1, 10
+movz X0, 0x5     
+movz X1, 0x1000  
+lsl  X1, X1, 16  
+add  X1, X1, target 
+br   X1           
 
-MOV X0, foo 
-BR X0    
-adds X2, X0, 10
+movz X2, 0xA  
 
-foo:
-subs X3, X1, 10
-
-HLT 0
+target:
+    add X3, X0, X0  
+    hlt 0
