@@ -64,6 +64,7 @@ InstructionInfo instruction_table[] = {
 
     {"LSL", 0b110100110, execute_lsl},
     {"LSR", 0b110100110, execute_lsr},
+    
     {"STUR", 0b11111000000, execute_stur},
     {"STURB", 0b00111000000, execute_sturb},
     {"STURH", 0b01111000000, execute_sturh},

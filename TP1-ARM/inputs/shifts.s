@@ -1,11 +1,7 @@
 .text
-
-movz X0, 0x10     
-movz X1, 0x8    
-lsl X2, X0, 2     
-lsr X3, X1, 2    
-movz X4, 0xC     
-lsl X5, X4, 1   
-lsr X6, X4, 1       
+adds X0, X10, 16
+subs X1, X0, 10 
+lsr X0, X0, 2    
+lsl X1, X1, 3    
 
 HLT 0  
