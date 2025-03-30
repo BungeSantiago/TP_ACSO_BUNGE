@@ -32,8 +32,8 @@ void execute_eor(uint32_t instruction);
 void execute_orr(uint32_t instruction);
 void execute_b(uint32_t instruction);
 void execute_br(uint32_t instruction);
-void execute_lsli(uint32_t instruction);
-void execute_lsri(uint32_t instruction);
+void execute_lsl(uint32_t instruction);
+void execute_lsr(uint32_t instruction);
 
 void execute_stur(uint32_t instruction);
 void execute_sturb(uint32_t instruction);
@@ -57,19 +57,20 @@ InstructionInfo instruction_table[] = {
     {"ANDS", 0b11101010, execute_ands},
     {"EORSR", 0b11001010, execute_eor},
     {"ORRSR", 0b10101010, execute_orr},
+
     {"B", 0b000101, execute_b},
     {"BR", 0b1101011000011111000000, execute_br},
-    
     {"BCOND", 0b01010100, execute_bcond},
-    {"LSLI", 0b110100110, execute_lsli},
-    {"LSRI", 0b110100110, execute_lsri},
+
+    {"LSL", 0b110100110, execute_lsl},
+    {"LSR", 0b110100110, execute_lsr},
     {"STUR", 0b11111000000, execute_stur},
     {"STURB", 0b00111000000, execute_sturb},
     {"STURH", 0b01111000000, execute_sturh},
     {"LDUR", 0b11111000010, execute_ldur},
     {"LDURH", 0b0111000010, execute_ldurh},
     {"LDURB", 0b00111000010, execute_ldurb},
-    {"MOVZ", 0b110100101, execute_movz},
+    {"MOVZ", 0b110100101, execute_movz}, // funciona
     {"ADDER", 0b10001011001, execute_adder},
     {"ADDI", 0b10010001, execute_addi},
     {"MUL", 0b10011011000, execute_mul},
@@ -342,7 +343,7 @@ void execute_br(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.REGS[rn];
 }
-void execute_lsli(uint32_t instruction) {
+void execute_lsl(uint32_t instruction) {
     int rd = instruction & val5;
     int rn = (instruction & (val5 << 5)) >> 5;
     int immr = (instruction & (val6 << 16)) >> 16;
@@ -350,7 +351,7 @@ void execute_lsli(uint32_t instruction) {
     NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] << immr;
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-void execute_lsri(uint32_t instruction) {
+void execute_lsr(uint32_t instruction) {
     int rd = instruction & val5;
     int rn = (instruction & (val5 << 5)) >> 5;
     int immr = (instruction & (val6 << 16)) >> 16;
