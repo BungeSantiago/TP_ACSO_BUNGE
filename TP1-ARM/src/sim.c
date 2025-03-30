@@ -32,8 +32,7 @@ void execute_eor(uint32_t instruction);
 void execute_orr(uint32_t instruction);
 void execute_b(uint32_t instruction);
 void execute_br(uint32_t instruction);
-void execute_lsl(uint32_t instruction);
-void execute_lsr(uint32_t instruction);
+void execute_shift(uint32_t instruction);
 
 void execute_stur(uint32_t instruction);
 void execute_sturb(uint32_t instruction);
@@ -51,34 +50,30 @@ InstructionInfo instruction_table[] = {
     {"ADDS (IMMEDIATE)", 0b10110001, execute_addsi},
     {"SUBS (EXTENDED REGISTER)", 0b11101011000, execute_subser},
     {"SUBS (IMMEDIATE)", 0b11110001, execute_subsi},
-    {"HLT", 0b11010100010, NULL}, // HLT doesn't need a function
+    {"HLT", 0b11010100010, NULL},
     {"CMP (EXTENDED REGISTER)", 0b11101011001, execute_cmper},
     {"CMP (IMMEDIATE)", 0b11110001, execute_cmpi},
     {"ANDS", 0b11101010, execute_ands},
     {"EORSR", 0b11001010, execute_eor},
     {"ORRSR", 0b10101010, execute_orr},
+    {"SHIFT", 0b110100110, execute_shift},
+    {"STUR", 0b11111000000, execute_stur},
+    {"STURB", 0b00111000000, execute_sturb},
+    {"LDUR", 0b11111000010, execute_ldur},
+    {"LDURB", 0b00111000010, execute_ldurb},
+    {"MOVZ", 0b110100101, execute_movz},
+    {"MUL", 0b10011011000, execute_mul},
 
     {"B", 0b000101, execute_b},
     {"BR", 0b1101011000011111000000, execute_br},
     {"BCOND", 0b01010100, execute_bcond}, // segmentation faults
-
-    {"LSL", 0b110100110, execute_lsl}, // funciona
-    {"LSR", 0b110100110, execute_lsr}, // mismo opcode q onda???
-
-    {"STUR", 0b11111000000, execute_stur},
-    
-    {"STURB", 0b00111000000, execute_sturb},
     {"STURH", 0b01111000000, execute_sturh},
-    {"LDUR", 0b11111000010, execute_ldur},
     {"LDURH", 0b0111000010, execute_ldurh},
-    {"LDURB", 0b00111000010, execute_ldurb},
-    {"MOVZ", 0b110100101, execute_movz}, // funciona
+
     {"ADDER", 0b10001011001, execute_adder},
     {"ADDI", 0b10010001, execute_addi},
-    {"MUL", 0b10011011000, execute_mul}, // funciona
     {"CBZ", 0b10110100, execute_cbz},
     {"CBNZ", 0b101110, execute_cbnz},
-    // Add more instructions as needed
 };
 
 #define INSTRUCTION_COUNT (sizeof(instruction_table) / sizeof(InstructionInfo))
@@ -328,7 +323,6 @@ void execute_orr(uint32_t instruction) {
     NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] | CURRENT_STATE.REGS[rm];
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
-
 void execute_b(uint32_t instruction) {
     int32_t imm26 = instruction & val26;
 
@@ -345,32 +339,48 @@ void execute_br(uint32_t instruction) {
 
     NEXT_STATE.PC = CURRENT_STATE.REGS[rn];
 }
-void execute_lsl(uint32_t instruction) {
-    int rd = instruction & val5;
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int immr = (instruction & (val6 << 16)) >> 16;
-
-    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] << immr;
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-}
-void execute_lsr(uint32_t instruction) {
-    int rd = instruction & val5;
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int immr = (instruction & (val6 << 16)) >> 16;
-
-    NEXT_STATE.REGS[rd] = (uint64_t)CURRENT_STATE.REGS[rn] >> immr;
+void execute_shift(uint32_t instruction) {
+    uint32_t Rd = instruction & 0x1F;
+    uint32_t Rn = (instruction >> 5) & 0x1F;
+    uint32_t immr = (instruction >> 16) & 0x3F;
+    uint32_t imms = (instruction >> 10) & 0x3F;
+    
+    uint64_t source = CURRENT_STATE.REGS[Rn];
+    uint64_t result;
+    
+    // Determinar si es LSL o LSR
+    if (imms != 63) {
+        // LSL: imms = 63 - shift
+        uint32_t shift = 63 - imms;
+        result = (shift >= 64) ? 0 : (source << shift);
+    } else {
+        // LSR: imms siempre es 63
+        uint32_t shift = immr;
+        result = (shift >= 64) ? 0 : (source >> shift);
+    }
+    
+    NEXT_STATE.REGS[Rd] = result;
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_stur(uint32_t instruction) {
-    int rt = instruction & val5;
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int imm9 = (instruction & (val9 << 12)) >> 12;
+    uint32_t rt = instruction & val5;
+    uint32_t rn = (instruction & (val5 << 5)) >> 5;
+    int32_t imm9 = (instruction & (val9 << 12)) >> 12;
+
+    if (imm9 & (1 << 8)) {
+        imm9 |= ~val9;
+    }
 
     uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
+
+    if (address < 0x10000000 || address >= 0x10100000) {
+        printf("La dirección está fuera de rango: 0x%llx\n", address);
+        return;
+    }
     mem_write_32(address, (uint32_t)CURRENT_STATE.REGS[rt]);
 
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-}
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Move to the next instruction
+} 
 void execute_sturb(uint32_t instruction) {
     int rt = instruction & val5;
     int rn = (instruction & (val5 << 5)) >> 5;
@@ -402,9 +412,11 @@ void execute_ldur(uint32_t instruction) {
     int imm9 = (instruction & (val9 << 12)) >> 12;
 
     uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
-    uint32_t word_value = mem_read_32(address);
-    NEXT_STATE.REGS[rt] = (uint64_t)word_value;
 
+    uint32_t low = mem_read_32(address);
+    uint32_t high = mem_read_32(address + 4);
+        
+    NEXT_STATE.REGS[rt] = ((uint64_t) high << 32) | low;;
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_ldurh(uint32_t instruction) {
@@ -430,9 +442,9 @@ void execute_ldurb(uint32_t instruction) {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_movz(uint32_t instruction) {
-    int rd = instruction & val5;
-    int imm16 = (instruction & (val16 << 5)) >> 5;
-    int hw = (instruction & (0b11 << 21)) >> 21;
+    uint32_t rd = instruction & val5;
+    uint32_t imm16 = (instruction & (val16 << 5)) >> 5;
+    uint32_t hw = (instruction & (0b11 << 21)) >> 21;
 
     if (hw == 0) {
         NEXT_STATE.REGS[rd] = (uint64_t)imm16;
@@ -464,9 +476,9 @@ void execute_addi(uint32_t instruction) {
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_mul(uint32_t instruction) {
-    int rd = instruction & val5;
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int rm = (instruction & (val5 << 16)) >> 16;
+    uint32_t rd = instruction & val5;
+    uint32_t rn = (instruction & (val5 << 5)) >> 5;
+    uint32_t rm = (instruction & (val5 << 16)) >> 16;
 
     NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] * CURRENT_STATE.REGS[rm];
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
@@ -519,7 +531,6 @@ void execute_bcond(uint32_t instruction){
         execute_cond_le(instruction);
     }
 }
-
 void process_instruction() {
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
     printf("instruction: %x\n", instruction);
