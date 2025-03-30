@@ -45,4 +45,3 @@ open(fhex, 'w').write(data)
 cmd = ["rm", ftmp]
 cmd = str.join(' ', cmd)
 subprocess.call(cmd, shell=True)  # we need a shell to expand the wildcard
-
