@@ -1,16 +1,16 @@
 
 Current register/bus values :
 -------------------------------------
-Instruction Count : 4
-PC                : 0x40000c
+Instruction Count : 7
+PC                : 0x40001c
 Registers:
-X0: 0xfffffffffffffffe
-X1: 0xffffffffffffffff
-X2: 0xfffffffffffffffe
-X3: 0x0
+X0: 0x0
+X1: 0x0
+X2: 0x6
+X3: 0x6
 X4: 0x0
 X5: 0x0
-X6: 0x0
+X6: 0xc
 X7: 0x0
 X8: 0x0
 X9: 0x0
@@ -36,6 +36,6 @@ X28: 0x0
 X29: 0x0
 X30: 0x0
 X31: 0x0
-FLAG_N: 1
+FLAG_N: 0
 FLAG_Z: 0
 
