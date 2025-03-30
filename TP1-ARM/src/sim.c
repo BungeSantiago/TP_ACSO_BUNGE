@@ -63,15 +63,14 @@ InstructionInfo instruction_table[] = {
     {"LDURB", 0b00111000010, execute_ldurb},
     {"MOVZ", 0b110100101, execute_movz},
     {"MUL", 0b10011011000, execute_mul},
+    {"ADDER", 0b10001011000, execute_adder},
+    {"ADDI", 0b10010001, execute_addi},
 
     {"B", 0b000101, execute_b},
     {"BR", 0b1101011000011111000000, execute_br},
     {"BCOND", 0b01010100, execute_bcond}, // segmentation faults
     {"STURH", 0b01111000000, execute_sturh},
     {"LDURH", 0b0111000010, execute_ldurh},
-
-    {"ADDER", 0b10001011001, execute_adder},
-    {"ADDI", 0b10010001, execute_addi},
     {"CBZ", 0b10110100, execute_cbz},
     {"CBNZ", 0b101110, execute_cbnz},
 };
