@@ -7,4 +7,4 @@ movz X2, 100
 
 greater:
 movz X3, 200 
-hlt 0
+HLT 0

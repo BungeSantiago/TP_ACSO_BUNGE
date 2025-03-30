@@ -103,7 +103,7 @@ uint32_t val9 = 0b111111111;
 uint32_t val8 = 0b11111111;
 uint32_t val16 = 0b1111111111111111;
 uint32_t val19 = 0b1111111111111111111;
-
+//m,antener el ultimo registor en 0
 
 void execute_cond_eq(uint32_t instruction) {
     int imm19 = (instruction >> 5) & val19;
@@ -514,19 +514,19 @@ void execute_bcond(uint32_t instruction){
     if (cond == cond_EQ){
         execute_cond_eq(instruction);
     }
-    if (cond == cond_NE){
+    else if (cond == cond_NE){
         execute_cond_ne(instruction);
     }
-    if (cond == cond_GT){
+    else if (cond == cond_GT){
         execute_cond_gt(instruction);
     }
-    if (cond == cond_LT){
+    else if (cond == cond_LT){
         execute_cond_lt(instruction);
     }
-    if (cond == cond_GE){
+    else if (cond == cond_GE){
         execute_cond_ge(instruction);
     }
-    if (cond == cond_LE){
+    else if (cond == cond_LE){
         execute_cond_le(instruction);
     }
 }
