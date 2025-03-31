@@ -49,10 +49,9 @@ InstructionInfo instruction_table[] = {
     {"ADDS (EXTENDED REGISTER)", 0b10101011000, execute_addsr},
     {"ADDS (IMMEDIATE)", 0b10110001, execute_addsi},
     {"SUBS (EXTENDED REGISTER)", 0b11101011000, execute_subser},
-    {"SUBS (IMMEDIATE)", 0b11110001, execute_subsi},
+    {"SUBS/CMP (IMMEDIATE)", 0b11110001, execute_subsi},
     {"HLT", 0b11010100010, NULL},
     {"CMP (EXTENDED REGISTER)", 0b11101011001, execute_cmper},
-    {"CMP (IMMEDIATE)", 0b11110001, execute_cmpi},
     {"ANDS", 0b11101010, execute_ands},
     {"EORSR", 0b11001010, execute_eor},
     {"ORRSR", 0b10101010, execute_orr},
@@ -68,7 +67,7 @@ InstructionInfo instruction_table[] = {
     {"B", 0b000101, execute_b},
     {"CBZ", 0b10110100, execute_cbz},
     {"CBNZ", 0b10110101, execute_cbnz},
-    {"BR", 0b1101011000011111000000, execute_br}, //test
+    {"BR", 0b1101011000011111000000, execute_br},
     {"BCOND", 0b01010100, execute_bcond},
     {"STURH", 0b01111000000, execute_sturh},
     {"LDURH", 0b0111000010, execute_ldurh},
@@ -102,7 +101,6 @@ uint32_t val9 = 0b111111111;
 uint32_t val8 = 0b11111111;
 uint32_t val16 = 0b1111111111111111;
 uint32_t val19 = 0b1111111111111111111;
-//m,antener el ultimo registor en 0
 
 uint64_t read_register(int reg) {
     return (reg == 31) ? 0 : CURRENT_STATE.REGS[reg];
@@ -199,19 +197,13 @@ void execute_addsr(uint32_t instruction) {
     int rn = (instruction & (val5 << 5)) >> 5;
     int rm = (instruction & (val5 << 16)) >> 16;
 
-    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + CURRENT_STATE.REGS[rm];
+    uint64_t rn_value = read_register(rn);
+    uint64_t rm_value = read_register(rm);
 
-    if (NEXT_STATE.REGS[rd] < 0) {
-        NEXT_STATE.FLAG_N = 1;
-    } else {
-        NEXT_STATE.FLAG_N = 0;
-    }
+    write_register(rd, rn_value + rm_value);
 
-    if (NEXT_STATE.REGS[rd] == 0) {
-        NEXT_STATE.FLAG_Z = 1;
-    } else {
-        NEXT_STATE.FLAG_Z = 0;
-    }
+    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[rd] >> 63) & 1;
+    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[rd] == 0) ? 1 : 0;
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
@@ -224,7 +216,8 @@ void execute_addsi(uint32_t instruction) {
 
     uint64_t imm_value = sh ? (imm12 << 12) : imm12;
 
-    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + imm_value;
+    uint64_t rn_value = read_register(rn);
+    write_register(rd, rn_value + imm_value);
 
     NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[rd] < 0) ? 1 : 0;
     NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[rd] == 0) ? 1 : 0;
@@ -239,26 +232,34 @@ void execute_subser(uint32_t instruction) {
     int option = (instruction & (val3 << 13)) >> 13;
     int rm = (instruction & (val5 << 16)) >> 16;
 
-    NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] - CURRENT_STATE.REGS[rm];
+    uint64_t rn_value = read_register(rn);
+    uint64_t rm_value = read_register(rm);
 
-    NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[rd] < 0) ? 1 : 0;
-    NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[rd] == 0) ? 1 : 0;
+    int64_t result = (int64_t)rn_value - (int64_t)rm_value;
+
+    if (rd != 31) {
+        write_register(rd, result);
+    }
+
+    NEXT_STATE.FLAG_N = (result < 0) ? 1 : 0; 
+    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0; 
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_subsi(uint32_t instruction) {
-
-    int rd = instruction & val5;
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int imm12 = (instruction & (val12 << 10)) >> 10;
-    int shift = (instruction & (val1 << 22)) >> 22;
+    int rd = instruction & val5; 
+    int rn = (instruction & (val5 << 5)) >> 5; 
+    int imm12 = (instruction & (val12 << 10)) >> 10; 
+    int shift = (instruction & (val1 << 22)) >> 22; 
 
     uint64_t imm_value = shift ? (imm12 << 12) : imm12;
+    uint64_t rn_value = read_register(rn);
+    int64_t result = (int64_t)rn_value - (int64_t)imm_value;
+    if (rd != 31) {
+        write_register(rd, result);
+    }
 
-    int64_t result = CURRENT_STATE.REGS[rn] - imm_value;
-    NEXT_STATE.REGS[rd] = result;
-
-    NEXT_STATE.FLAG_N = (result < 0) ? 1 : 0;
+    NEXT_STATE.FLAG_N = (result < 0) ? 1 : 0; 
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;
 
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
@@ -270,20 +271,6 @@ void execute_cmper(uint32_t instruction) {
     int rm = (instruction & (val5 << 16)) >> 16;
 
     int64_t result = CURRENT_STATE.REGS[rn] - CURRENT_STATE.REGS[rm];
-
-    NEXT_STATE.FLAG_N = (result < 0) ? 1 : 0;
-    NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;
-
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-}
-void execute_cmpi(uint32_t instruction) {
-    int rn = (instruction & (val5 << 5)) >> 5;
-    int imm12 = (instruction & (val12 << 10)) >> 10;
-    int shift = (instruction & (val1 << 22)) >> 22;
-
-    uint64_t imm_value = shift ? (imm12 << 12) : imm12;
-
-    int64_t result = CURRENT_STATE.REGS[rn] - imm_value;
 
     NEXT_STATE.FLAG_N = (result < 0) ? 1 : 0;
     NEXT_STATE.FLAG_Z = (result == 0) ? 1 : 0;
