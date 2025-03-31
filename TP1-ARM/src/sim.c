@@ -70,8 +70,8 @@ InstructionInfo instruction_table[] = {
     {"CBNZ", 0b10110101, execute_cbnz},
     {"BR", 0b1101011000011111000000, execute_br}, //test
     {"BCOND", 0b01010100, execute_bcond},
-    {"STURH", 0b01111000000, execute_sturh}, //test
-    {"LDURH", 0b0111000010, execute_ldurh}, //test
+    {"STURH", 0b01111000000, execute_sturh},
+    {"LDURH", 0b0111000010, execute_ldurh},
 };
 
 #define INSTRUCTION_COUNT (sizeof(instruction_table) / sizeof(InstructionInfo))
@@ -104,17 +104,23 @@ uint32_t val16 = 0b1111111111111111;
 uint32_t val19 = 0b1111111111111111111;
 //m,antener el ultimo registor en 0
 
+uint64_t read_register(int reg) {
+    return (reg == 31) ? 0 : CURRENT_STATE.REGS[reg];
+}
+void write_register(int reg, uint64_t value) {
+    if (reg != 31) {
+        NEXT_STATE.REGS[reg] = value;
+    }
+}
 void execute_cond_eq(uint32_t instruction) {
     int imm19 = (instruction >> 5) & val19;
-    int cond = instruction & val4;  // Aunque para BEQ cond siempre es 0b0000
-    int32_t offset = (imm19 << 2);  // Se multiplica por 4
+    int cond = instruction & val4; 
+    int32_t offset = (imm19 << 2);  
 
-    // Extensión de signo si el bit 18 (más significativo de imm19) es 1
     if (imm19 & (1 << 18)) {
-        offset |= 0b11111111111110000000000000000000;  // Extiende a 32 bits con 1s
+        offset |= 0b11111111111110000000000000000000; 
     }
 
-    // Condición para BEQ: salta si Z == 1
     if (CURRENT_STATE.FLAG_Z == 1) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
     } else {
@@ -122,15 +128,13 @@ void execute_cond_eq(uint32_t instruction) {
     }
 }
 void execute_cond_ne(uint32_t instruction) {
-    int imm19 = (instruction >> 5) & 0b1111111111111111111;  // Extrae los bits 23:5
-    int32_t offset = imm19 << 2;  // Multiplica por 4 (inserta dos ceros a la derecha)
+    int imm19 = (instruction >> 5) & 0b1111111111111111111; 
+    int32_t offset = imm19 << 2; 
 
-    // Sign-extend si el bit 18 está en 1
     if (imm19 & (1 << 18)) {
-        offset |= 0b11111111111110000000000000000000;  // Rellena los bits altos con 1s
+        offset |= 0b11111111111110000000000000000000;
     }
 
-    // Condición para BNE: salta si Z == 0
     if (CURRENT_STATE.FLAG_Z == 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
     } else {
@@ -141,7 +145,7 @@ void execute_cond_gt(uint32_t instruction) {
     int imm19 = (instruction >> 5) & 0b1111111111111111111;
     int32_t offset = (imm19 << 2);
     if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFE000;  // extensión de signo
+        offset |= 0xFFFFE000;
     }
 
     if ((CURRENT_STATE.FLAG_Z == 0) && (CURRENT_STATE.FLAG_N == 0)) {
@@ -193,13 +197,10 @@ void execute_addsr(uint32_t instruction) {
     
     int rd = (instruction & val5);
     int rn = (instruction & (val5 << 5)) >> 5;
-    int imm3 = (instruction & (val3 << 10)) >> 10;
-    int option = (instruction & (val3 << 13) >> 13);
     int rm = (instruction & (val5 << 16)) >> 16;
 
     NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] + CURRENT_STATE.REGS[rm];
 
-    // Actualizar los flags
     if (NEXT_STATE.REGS[rd] < 0) {
         NEXT_STATE.FLAG_N = 1;
     } else {
@@ -238,14 +239,11 @@ void execute_subser(uint32_t instruction) {
     int option = (instruction & (val3 << 13)) >> 13;
     int rm = (instruction & (val5 << 16)) >> 16;
 
-    // Realizar la resta entre registros extendidos
     NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rn] - CURRENT_STATE.REGS[rm];
 
-    // Actualizar flags
     NEXT_STATE.FLAG_N = (NEXT_STATE.REGS[rd] < 0) ? 1 : 0;
     NEXT_STATE.FLAG_Z = (NEXT_STATE.REGS[rd] == 0) ? 1 : 0;
 
-    // Avanzar PC
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_subsi(uint32_t instruction) {
@@ -324,12 +322,11 @@ void execute_orr(uint32_t instruction) {
 void execute_b(uint32_t instruction) {
     int32_t imm26 = instruction & val26;
 
-    // Sign-extend a 32 bits si el bit 25 está en 1
     if (imm26 & (1 << 25)) {
-        imm26 |= ~val26; // completa con 1s a la izquierda
+        imm26 |= ~val26; 
     }
 
-    int64_t offset = ((int64_t)imm26) << 2; // multiplicar por 4
+    int64_t offset = ((int64_t)imm26) << 2; 
     NEXT_STATE.PC = CURRENT_STATE.PC + offset;
 }
 void execute_br(uint32_t instruction) {
@@ -338,21 +335,18 @@ void execute_br(uint32_t instruction) {
     NEXT_STATE.PC = CURRENT_STATE.REGS[rn];
 }
 void execute_shift(uint32_t instruction) {
-    uint32_t Rd = instruction & 0x1F;
-    uint32_t Rn = (instruction >> 5) & 0x1F;
-    uint32_t immr = (instruction >> 16) & 0x3F;
-    uint32_t imms = (instruction >> 10) & 0x3F;
+    uint32_t Rd = instruction & val5;           
+    uint32_t Rn = (instruction >> 5) & val5;   
+    uint32_t immr = (instruction >> 16) & val6;    
+    uint32_t imms = (instruction >> 10) & val6;
     
     uint64_t source = CURRENT_STATE.REGS[Rn];
     uint64_t result;
     
-    // Determinar si es LSL o LSR
     if (imms != 63) {
-        // LSL: imms = 63 - shift
         uint32_t shift = 63 - imms;
         result = (shift >= 64) ? 0 : (source << shift);
     } else {
-        // LSR: imms siempre es 63
         uint32_t shift = immr;
         result = (shift >= 64) ? 0 : (source >> shift);
     }
@@ -368,16 +362,14 @@ void execute_stur(uint32_t instruction) {
     if (imm9 & (1 << 8)) {
         imm9 |= ~val9;
     }
-
     uint64_t address = CURRENT_STATE.REGS[rn] + imm9;
-
     if (address < 0x10000000 || address >= 0x10100000) {
         printf("La dirección está fuera de rango: 0x%llx\n", address);
         return;
     }
     mem_write_32(address, (uint32_t)CURRENT_STATE.REGS[rt]);
 
-    NEXT_STATE.PC = CURRENT_STATE.PC + 4;  // Move to the next instruction
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4; 
 } 
 void execute_sturb(uint32_t instruction) {
     int rt = instruction & val5;
@@ -484,9 +476,8 @@ void execute_mul(uint32_t instruction) {
 void execute_cbz(uint32_t instruction) {
     int rt = instruction & val5;
     int imm19 = (instruction >> 5) & val19;
-    int32_t offset = (imm19 << 2);  // se multiplica por 4 (offset de palabra)
+    int32_t offset = (imm19 << 2);  
     
-    // Sign-extend si el bit 18 está en 1
     if (imm19 & (1 << 18)) {
         offset |= 0xFFF80000;
     }
@@ -500,7 +491,7 @@ void execute_cbz(uint32_t instruction) {
 void execute_cbnz(uint32_t instruction) {
     int rt = instruction & val5;
     int imm19 = (instruction >> 5) & val19;
-    int64_t offset = ((int32_t)(imm19 << 13)) >> 11; // sign-extend de 19 bits y multiplicar por 4
+    int64_t offset = ((int32_t)(imm19 << 13)) >> 11;
 
     if (CURRENT_STATE.REGS[rt] != 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + offset;
