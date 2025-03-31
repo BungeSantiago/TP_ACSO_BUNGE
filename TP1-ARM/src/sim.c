@@ -322,12 +322,12 @@ void execute_br(uint32_t instruction) {
     NEXT_STATE.PC = CURRENT_STATE.REGS[rn];
 }
 void execute_shift(uint32_t instruction) {
-    uint32_t Rd = instruction & val5;           
-    uint32_t Rn = (instruction >> 5) & val5;   
+    uint32_t rd = instruction & val5;           
+    uint32_t rn = (instruction >> 5) & val5;   
     uint32_t immr = (instruction >> 16) & val6;    
     uint32_t imms = (instruction >> 10) & val6;
     
-    uint64_t source = CURRENT_STATE.REGS[Rn];
+    uint64_t source = CURRENT_STATE.REGS[rn];
     uint64_t result;
     
     if (imms != 63) {
@@ -338,7 +338,7 @@ void execute_shift(uint32_t instruction) {
         result = (shift >= 64) ? 0 : (source >> shift);
     }
     
-    NEXT_STATE.REGS[Rd] = result;
+    NEXT_STATE.REGS[rd] = result;
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 void execute_stur(uint32_t instruction) {
