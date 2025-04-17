@@ -1,16 +1,71 @@
 #include "ej1.h"
+#include <string.h>
+// Manejo de error si no se pudo reservar memoria
 
-string_proc_list* string_proc_list_create(void){
+string_proc_list* string_proc_list_create(void) {
+    string_proc_list* list = malloc(sizeof(string_proc_list));
+    if (list == NULL) {
+        return NULL; 
+    }
+    list->first = NULL;
+    list->last = NULL;
+    return list;
 }
 
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+	string_proc_node* node = malloc(sizeof(string_proc_node));
+	if (node == NULL) {
+		return NULL; // Manejo de error si no se pudo reservar memoria
+	}
+	node->next = NULL;
+	node->previous = NULL;
+	node->type = type;
+	node->hash = hash; // Copia el hash a la memoria del nodo
+	return node;
 }
 
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
+    if (list == NULL) {
+        return; // Manejo de error si la lista es NULL
+    }
+	string_proc_node* node = string_proc_node_create(type, hash);
+	if (node == NULL) {
+		return; // Manejo de error si no se pudo crear el nodo
+	}
+
+	if (list->first == NULL) {
+		list->first = node;
+		list->last = node;
+	} else {
+		list->last->next = node;
+		node->previous = list->last;
+		list->last = node;
+	}
+	// Si la lista no está vacía, enlazamos el nuevo nodo al final
 }
 
-char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash){
+char* string_proc_list_concat(string_proc_list* list, uint8_t type, char* hash) {
+    if (list == NULL || hash == NULL) return NULL;
+
+    char* resultado = malloc(strlen(hash) + 1);
+    if (resultado == NULL) return NULL;
+
+    strcpy(resultado, hash);
+
+    string_proc_node* actual = list->first;
+    while (actual != NULL) {
+        if (actual->type == type && actual->hash != NULL) {
+            char* resultado_nuevo = str_concat(resultado, actual->hash);
+            free(resultado);
+            if (resultado_nuevo == NULL) return NULL;
+            resultado = resultado_nuevo;
+        }
+        actual = actual->next;
+    }
+
+    return resultado;
 }
+
 
 
 /** AUX FUNCTIONS **/
