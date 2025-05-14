@@ -27,7 +27,7 @@ int file_getblock(struct unixfilesystem *fs, int inumber,
     int remaining   = totalBytes - firstByte;
     int nValid      = (remaining >= DISKIMG_SECTOR_SIZE) ? DISKIMG_SECTOR_SIZE : remaining;
 
-    return nValid;                          // éxito
+    return nValid;                          
 }
 
 

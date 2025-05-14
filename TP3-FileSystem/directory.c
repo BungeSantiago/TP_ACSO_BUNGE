@@ -25,24 +25,24 @@ int directory_findname(struct unixfilesystem *fs, const char *name,
 
   for (int blk = 0; blk < nBlocks; blk++) {
     int nValid = file_getblock(fs, dirinumber, blk, buf);
-    if (nValid < 0) return -1;                         /* error de lectura */
+    if (nValid < 0) return -1;                         
 
     int nEntries = nValid / sizeof(struct direntv6);
     for (int i = 0; i < nEntries; i++) {
       struct direntv6 *entry = (struct direntv6 *)(buf + i * sizeof(struct direntv6));
 
-      if (entry->d_inumber == 0) continue;        /* entrada vacía */
+      if (entry->d_inumber == 0) continue;        
 
       char entryName[15];
       memcpy(entryName, entry->d_name, 14);
-      entryName[14] = '\0';              /* asegurar terminación */
+      entryName[14] = '\0';              
 
       if (strcmp(name, entryName) == 0) {
-      *dirEnt = *entry;              /* copiar resultado */
-      return 0;                      /* éxito */
+      *dirEnt = *entry;              
+      return 0;                      
       }
     }
   }
 
-return -1;                                 /* nombre no encontrado */
+return -1;                                 
 }

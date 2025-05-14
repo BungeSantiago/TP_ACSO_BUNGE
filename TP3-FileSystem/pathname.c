@@ -13,26 +13,26 @@ int pathname_lookup(struct unixfilesystem *fs, const char *pathname)
         return -1;
 
     if (pathname[1] == '\0')
-        return ROOT_INUMBER;                       /* / */
+        return ROOT_INUMBER;                       
 
-    int curr_inum = ROOT_INUMBER;                  /* empezamos en raíz */
-    const char *p = pathname + 1;                  /* saltar '/' inicial */
-    char name[15];                                 /* 14 + '\0' */
+    int curr_inum = ROOT_INUMBER;                  
+    const char *p = pathname + 1;                  // saltar '/' inicial
+    char name[15];                                 
     int len = 0;
 
     while (1) {
         if (*p != '/' && *p != '\0') {
-            if (len >= 14) return -1;              /* nombre muy largo */
+            if (len >= 14) return -1;              // nombre muy largo 
             name[len++] = *p++;
             continue;
         }
 
-        if (len == 0) return -1;                   /* shouldn't happen (no //) */
+        if (len == 0) return -1;                   
         name[len] = '\0';
 
         struct direntv6 entry;
         if (directory_findname(fs, name, curr_inum, &entry) < 0)
-            return -1;                             /* componente no hallado */
+            return -1;                             
 
         curr_inum = entry.d_inumber;
 
