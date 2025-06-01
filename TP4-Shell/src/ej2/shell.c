@@ -1,47 +1,77 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <string.h>
+#include <sys/wait.h>
 
-#define MAX_COMMANDS 200
+#define MAX_CMDS 20
+#define MAX_ARGS 20
+#define BUF 512 
 
-int main() {
+int main(void)
+{
+    char line[BUF];
+    char *cmds[MAX_CMDS];
 
-    char command[256];
-    char *commands[MAX_COMMANDS];
-    int command_count = 0;
+    while (1) {
+        printf("shell> ");
+        if (!fgets(line, sizeof(line), stdin)) break; // EOF
+        line[strcspn(line, "\n")] = '\0';          // saca el salto
 
-    while (1) 
-    {
-        printf("Shell> ");
-        
-        /*Reads a line of input from the user from the standard input (stdin) and stores it in the variable command */
-        fgets(command, sizeof(command), stdin);
-        
-        /* Removes the newline character (\n) from the end of the string stored in command, if present. 
-           This is done by replacing the newline character with the null character ('\0').
-           The strcspn() function returns the length of the initial segment of command that consists of 
-           characters not in the string specified in the second argument ("\n" in this case). */
-        command[strcspn(command, "\n")] = '\0';
+        if (strcmp(line, "exit") == 0) break;       // salir
 
-        /* Tokenizes the command string using the pipe character (|) as a delimiter using the strtok() function. 
-           Each resulting token is stored in the commands[] array. 
-           The strtok() function breaks the command string into tokens (substrings) separated by the pipe character |. 
-           In each iteration of the while loop, strtok() returns the next token found in command. 
-           The tokens are stored in the commands[] array, and command_count is incremented to keep track of the number of tokens found. */
-        char *token = strtok(command, "|");
-        while (token != NULL) 
-        {
-            commands[command_count++] = token;
-            token = strtok(NULL, "|");
+        // separar pipes
+        int ncmd = 0;
+        char *tok = strtok(line, "|");
+        while (tok && ncmd < MAX_CMDS) {
+            while (*tok == ' ') tok++;               // saltea espacios iniciales
+            cmds[ncmd++] = tok;
+            tok = strtok(NULL, "|");
+        }
+        if (ncmd == 0) continue;                     // linea vacia
+
+        int prev_in = -1;                            // extremo de lectura del pipe anterior
+
+        for (int i = 0; i < ncmd; ++i) {
+            int pfd[2];
+            if (i < ncmd - 1 && pipe(pfd) == -1) { perror("pipe"); exit(1); }
+
+            pid_t pid = fork();
+            if (pid == -1) { perror("fork"); exit(1); }
+
+            if (pid == 0) {
+                // hijo
+                if (prev_in != -1) dup2(prev_in, STDIN_FILENO);
+                if (i < ncmd - 1)   dup2(pfd[1], STDOUT_FILENO);
+
+                if (prev_in != -1) close(prev_in);
+                if (i < ncmd - 1) { close(pfd[0]); close(pfd[1]); }
+
+                // Crear argv para execvp
+                char *argv[MAX_ARGS];
+                int argc = 0;
+                char *arg = strtok(cmds[i], " \t");
+                while (arg && argc < MAX_ARGS - 1) {
+                    argv[argc++] = arg;
+                    arg = strtok(NULL, " \t");
+                }
+                argv[argc] = NULL;
+                if (!argv[0]) _exit(0);              // comando vacio
+
+                execvp(argv[0], argv);
+                perror("exec");
+                _exit(1);
+            }
+            // Padre 
+            if (prev_in != -1) close(prev_in);
+            if (i < ncmd - 1) {
+                close(pfd[1]);                       // padre solo va a leer
+                prev_in = pfd[0];
+            }
         }
 
-        /* You should start programming from here... */
-        for (int i = 0; i < command_count; i++) 
-        {
-            printf("Command %d: %s\n", i, commands[i]);
-        }    
+        if (prev_in != -1) close(prev_in);
+        while (wait(NULL) > 0);                       // espera hijos
     }
     return 0;
 }
