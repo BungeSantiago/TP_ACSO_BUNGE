@@ -14,7 +14,9 @@ int main(void)
     char *cmds[MAX_CMDS];
 
     while (1) {
-        printf("shell> ");
+        if (isatty(STDIN_FILENO)) { 
+            printf("Shell> ");
+        }
         if (!fgets(line, sizeof(line), stdin)) break; // EOF
         line[strcspn(line, "\n")] = '\0';          // saca el salto
 
@@ -24,12 +26,20 @@ int main(void)
         int ncmd = 0;
         char *tok = strtok(line, "|");
         while (tok && ncmd < MAX_CMDS) {
-            while (*tok == ' ') tok++;               // saltea espacios iniciales
+            while (*tok == ' ' || *tok == '\t') tok++;   // quita blancos iniciales
+
+            if (*tok == '\0') {  // segmento vacío error de sintaxis 
+                if (isatty(STDIN_FILENO)) { 
+                fprintf(stderr, "Error: '|' inesperado\n");}
+                ncmd = 0;                    // marca línea inválida 
+                break;
+            }
+
             cmds[ncmd++] = tok;
             tok = strtok(NULL, "|");
         }
-        if (ncmd == 0) continue;                     // linea vacia
-
+        // si la línea tenía problemas, saltamos sin ejecutar nada 
+        if (ncmd == 0) continue;
         int prev_in = -1;                            // extremo de lectura del pipe anterior
 
         for (int i = 0; i < ncmd; ++i) {
