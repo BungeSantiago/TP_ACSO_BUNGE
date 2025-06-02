@@ -13,10 +13,8 @@ int main(void)
     char line[BUF];
     char *cmds[MAX_CMDS];
 
-    while (1) {
-        if (isatty(STDIN_FILENO)) { 
+    while (1) { 
             printf("Shell> ");
-        }
         if (!fgets(line, sizeof(line), stdin)) break; // EOF
         line[strcspn(line, "\n")] = '\0';          // saca el salto
 
@@ -29,8 +27,7 @@ int main(void)
             while (*tok == ' ' || *tok == '\t') tok++;   // quita blancos iniciales
 
             if (*tok == '\0') {  // segmento vacío error de sintaxis 
-                if (isatty(STDIN_FILENO)) { 
-                fprintf(stderr, "Error: '|' inesperado\n");}
+                fprintf(stderr, "Error: '|' inesperado\n");
                 ncmd = 0;                    // marca línea inválida 
                 break;
             }
